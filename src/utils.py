@@ -8,11 +8,11 @@ from keras.layers import noise
 from keras.preprocessing.image import ImageDataGenerator
 from numpy.core.numeric import newaxis
 
-INPUT_LIMIT = 30
+INPUT_LIMIT = 10
 
 
-def data_generator(path = "data/training/", batch_size = 10, fitting=True, augmentation=True, rotation=0,
-                   noise_num=0, noise_level=25, flip=0):
+def data_generator(path = "data/training/", batch_size = 10, fitting=True, augmentation=True, rotation_num=0,
+                   noise_num=0, noise_level=0.1, flip_num=0, cut_out_num=0):
     print("Loading data from files")
     input_files = [f for f in listdir(path) if isfile(join( path,f)) and f.endswith('.bins') ]
     np.random.shuffle(input_files)          # we'll take random set from available data files
@@ -30,16 +30,14 @@ def data_generator(path = "data/training/", batch_size = 10, fitting=True, augme
 
     xs = np.reshape(xs, (-1,256,256,1), 'C')
 
-    print(len(xs))
-
     if augmentation:
         print("Augmentation started")
-        if rotation > 0 : print("\nCreating rotation of the data", rotation, "times")
-        xs_rot, ys_rot = random_rotation(xs,ys, rotation)
-        if noise_num > 0 : print("\nCreating noisy data with strength", noise_level)
+        if rotation_num > 0 : print("\nCreating rotations", rotation_num," of the data")
+        xs_rot, ys_rot = random_rotation(xs,ys, rotation_num)
+        if noise_num > 0 : print("\nCreating", noise_num ," of noisy data with strength", noise_level)
         xs_noise, ys_noise = gauss_noise(xs, ys, noise_level, noise_num)
-        if flip: print("\nCreating flipped data")
-        xs_flipped, ys_flipped = flip_image(xs,ys,flip)
+        if flip_num > 0 : print("\nCreating", flip_num ," of flipped data")
+        xs_flipped, ys_flipped = flip_image(xs,ys,flip_num)
 
         print('\n',len(xs) ,len(xs_rot), len(xs_noise), len(xs_flipped))
         xs = np.concatenate((xs, xs_rot, xs_noise, xs_flipped))
@@ -51,7 +49,7 @@ def data_generator(path = "data/training/", batch_size = 10, fitting=True, augme
         ys = ys[rand_idxs]
         print("Augmentation finished")
     print("The training dataset contains ",xs.shape[0], "images")
-    if not fitting:
+    if not fitting: # for testing purposes
         yield xs, ys
     else:
         rows = xs.shape[0]
@@ -66,6 +64,10 @@ def data_generator(path = "data/training/", batch_size = 10, fitting=True, augme
             yield bxs, bys
 
 def random_rotation(xs,ys,num):
+    if num == 0:
+        xs = np.empty((0, 256, 256, 1), dtype='float32')
+        ys = np.empty((0, 2), dtype='float32')
+        return xs, ys
     xs_aug = []
     ys_aug = []
     i = 0
@@ -84,6 +86,10 @@ def random_rotation(xs,ys,num):
     return xs_aug, ys_aug
 
 def gauss_noise(xs,ys,strength,num):
+    if num == 0:
+        xs = np.empty((0, 256, 256, 1), dtype='float32')
+        ys = np.empty((0, 2), dtype='float32')
+        return xs, ys
     xs_aug = []
     ys_aug = []
     i=0
@@ -108,14 +114,17 @@ def flip_image(xs, ys, num):
         ys = np.empty((0, 2), dtype='float32')
         return xs, ys
     xs_aug = []
+    ys_aug = []
     i=0
-    while i*2 < num or i <= len(xs):
+    while i*2 < num and i < len(xs):
         print(i, "/", num, '\r', end='')
         flipped_x1 = np.flipud(xs[i]).astype('float32')
         xs_aug.append(flipped_x1)
+        ys_aug.append(ys[i])
         flipped_x2 = np.fliplr(xs[i]).astype('float32')
         xs_aug.append(flipped_x2)
+        ys_aug.append(ys[i+1])
         i += 1
     xs_aug = np.array(xs_aug)
-    ys_aug = np.concatenate((ys, ys))
+    ys_aug = np.array(ys_aug)
     return xs_aug, ys_aug

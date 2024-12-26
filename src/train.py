@@ -5,25 +5,29 @@
     This code trains a convolutional network to find flaws in 
     ultrasonic data. See https://arxiv.org/abs/1903.11399 for details.
 '''
+from gc import callbacks
 
 import keras
-from Tools.i18n.makelocalealias import optimize
 from keras import backend as K
 from keras import Input, layers
 from keras import Model
-from tensorflow.python.client import device_lib
+
+import csv
+
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 
 from os import listdir
 from os.path import isfile, join
 import uuid
 import time
+import tensorflow as tf
 
 from utils import data_generator
 
-
+SEED = 1337
+keras.utils.set_random_seed(SEED)
+np.random.seed(SEED)
 
 w,h = 256,256                       # initial data size
 window = 7                          # window for the first max-pool operation
@@ -55,13 +59,11 @@ iscrack = layers.Dense(1, activation='sigmoid', name='output')(cb)
 
 
 model = Model(input_tensor, iscrack)
-opt = keras.optimizers.Adam(learning_rate=0.001, clipnorm=1.)
+opt = keras.optimizers.Adam(learning_rate=0.01, clipnorm=1.)
 
-# class_weights = [1.47,0.76]  # class weights for 66 percent of data containing defect
-class_weights = [0.5, 0.5]
+model.compile(optimizer=opt, loss='binary_crossentropy' , metrics=['acc'])
 
-model.compile(optimizer=opt, loss='binary_crossentropy' , metrics=['acc'], loss_weights=class_weights)
-model.summary()
+
 
 xs = np.empty(0, dtype='float32')
 ys = np.empty((0,2), dtype='float32')
@@ -75,37 +77,47 @@ for i in input_files:
     ys = np.concatenate((ys, bys))
 xs =np.reshape( xs, (-1,256,256,1), 'C')
 
-callbacks = [keras.callbacks.ModelCheckpoint( 'modelcpnt'+str(run_uuid)+'.keras', monitor='val_loss', verbose=1, save_best_only=True)
-            ]
+# callbacks = [keras.callbacks.ModelCheckpoint( 'modelcpnt'+str(run_uuid)+'.keras', monitor='val_loss', verbose=1, save_best_only=True)
+#             ]
+callbacks = []
 
-# RECOMENDED: rotation 1, noise_num 2, noise_level < 50, flip=0!
+
+# gen = data_generator(batch_size=70, augmentation=False,
+#                      rotation_num=400, noise_num=0, noise_level=0.1, flip_num=0)
 gen = data_generator(batch_size=70, augmentation=True,
-                     rotation=1000, noise_num=1000, noise_level=40, flip=0)
+                     rotation_num=400, noise_num=0, noise_level=0.1, flip_num=0)
+# gen = data_generator(batch_size=70, augmentation=True,
+#                      rotation_num=0, noise_num=400, noise_level=0.1, flip_num=0)
+# gen = data_generator(batch_size=70, augmentation=True,
+#                      rotation_num=0, noise_num=0, noise_level=0.1, flip_num=400)
+# gen = data_generator(batch_size=70, augmentation=True,
+#                      rotation_num=200, noise_num=200, noise_level=0.1, flip_num=200)
+
+
 history = model.fit(gen,
-                    epochs=100,
+                    epochs=50,
                     validation_data= (xs,ys[:,0]),
                     workers=8,
                     steps_per_epoch=60,
                     callbacks=callbacks,)
 
-plt.plot(history.history['acc'])
+
 plt.plot(history.history['val_acc'])
-plt.legend(['train', 'val'])
-plt.title('Accuracy history')
+plt.plot(history.history['acc'])
+plt.legend(['val_acc', 'acc'])
+plt.title('Validation accuracy history')
 plt.ylabel('Accuracy')
 plt.xlabel('Epoch')
 plt.savefig("acc_history.png")
 plt.show()
 
-# BEST VAL_LOSS = 0.16342 AUG
-# BEST VAL_LOSS =
-
-
-plt.plot(history.history['loss'])
 plt.plot(history.history['val_loss'])
-plt.legend(['train', 'val'])
-plt.title('Loss history')
+plt.plot(history.history['loss'])
+plt.legend(['val_loss', 'loss'])
+plt.title('Validation loss history')
 plt.ylabel('Loss')
 plt.xlabel('Epoch')
 plt.savefig("loss_history.png")
 plt.show()
+
+np.savetxt('data.csv',(history.history['val_loss'],history.history['val_acc']), delimiter=',')
