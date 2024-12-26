@@ -1,19 +1,26 @@
 
-from __future__ import print_function
-import sys
 import keras
 
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d.proj3d import rot_x
 
-model_path = sys.argv[1]
-data_path  = sys.argv[2]
+from utils import data_generator
+
+model_path = 'used_models/modelcpnt8be37c37-3771-4d89-917f-5c6fdfb4f63f.keras'
+data_path  = 'data/training'
 
 model = keras.models.load_model(model_path)
-rxs = np.fromfile(data_path, dtype=np.uint16 ).astype('float32')
-rxs -= rxs.mean()
-rxs /= rxs.std()+0.0001
-rxs = np.reshape( rxs, (-1,256,256,1), 'C')
 
-predictions = model.predict(rxs)
-print(predictions)
+gen =[i for i in data_generator(fitting=False)]
+
+rxs, rys = gen[0][0],gen[0][1]
+
+for i in range(5):
+    plt.imshow(rxs[i], interpolation='nearest')
+    print(rys[i])
+    plt.show()
+
+
+# predictions = model.predict(rxs)
+# print(predictions)
