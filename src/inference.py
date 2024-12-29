@@ -26,6 +26,8 @@ with open(data+'.jsons','r') as file:
         j = json.loads("{"+obj+"}")
         js.append(j["flaws"][0])
 
+
+
 bxs = np.fromfile(data + '.bins', dtype=np.uint16 ).astype('float32')
 bxs -= bxs.mean()
 bxs /= bxs.std()+0.0001
@@ -33,20 +35,15 @@ bys = np.loadtxt( data + '.labels')
 xs = np.reshape( bxs, (-1,256,256,1), 'C')
 p = np.empty((256, 256, 1), dtype='float32')
 
-m_j = (js[2]["location"]).split("-")
-m_j = [int(m_j[0]), int(m_j[1])]
-t=0
-for i in range(256):
-    for j in range(256):
-        t=t+1
-        if m_j[0] < t < m_j[1]:
-            p[i][j] = 10
-        else:
-            p[i][j] = 0
+for x in xs:
+    pos_shift = 100
+    plt.imshow(x, interpolation='nearest')
+    plt.show()
+    x = np.roll(x, pos_shift, axis=0)
 
-plt.imshow(xs[2]+p, interpolation='nearest')
-print(m_j, bys[2])
-plt.show()
+    plt.imshow(x, interpolation='nearest')
+    plt.show()
+    break
 
 # for i in range(1):
 #     plt.imshow(xs[i], interpolation='nearest')
