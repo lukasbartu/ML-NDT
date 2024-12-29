@@ -63,12 +63,12 @@ opt = keras.optimizers.Adam(learning_rate=0.01, clipnorm=1.)
 
 model.compile(optimizer=opt, loss='binary_crossentropy' , metrics=['acc'])
 
-
-
 xs = np.empty(0, dtype='float32')
 ys = np.empty((0,2), dtype='float32')
 input_files = [f for f in listdir(vpath) if isfile(join( vpath,f)) and f.endswith('.bins') ]
+print("Validation files:")
 for i in input_files:
+    print(i)
     bxs = np.fromfile(vpath+i, dtype=np.uint16 ).astype('float32')
     bxs -= bxs.mean()
     bxs /= bxs.std()+0.0001
@@ -77,22 +77,12 @@ for i in input_files:
     ys = np.concatenate((ys, bys))
 xs =np.reshape( xs, (-1,256,256,1), 'C')
 
-# callbacks = [keras.callbacks.ModelCheckpoint( 'modelcpnt'+str(run_uuid)+'.keras', monitor='val_loss', verbose=1, save_best_only=True)
-#             ]
-callbacks = []
+callbacks = [keras.callbacks.ModelCheckpoint( 'modelcpnt'+str(run_uuid)+'.keras', monitor='val_loss', verbose=1, save_best_only=True)
+            ]
 
-
-# gen = data_generator(batch_size=70, augmentation=False,
-#                      rotation_num=400, noise_num=0, noise_level=0.1, flip_num=0)
-gen = data_generator(batch_size=70, augmentation=True,
-                     rotation_num=400, noise_num=0, noise_level=0.1, flip_num=0)
-# gen = data_generator(batch_size=70, augmentation=True,
-#                      rotation_num=0, noise_num=400, noise_level=0.1, flip_num=0)
-# gen = data_generator(batch_size=70, augmentation=True,
-#                      rotation_num=0, noise_num=0, noise_level=0.1, flip_num=400)
-# gen = data_generator(batch_size=70, augmentation=True,
-#                      rotation_num=200, noise_num=200, noise_level=0.1, flip_num=200)
-
+aug_num = 250
+gen = data_generator(batch_size=70, augmentation=True, multiaug=True, pure_aug=False,
+                     rotation_num=aug_num, noise_num=aug_num, flip_num=aug_num,shift_num=aug_num, amp_change_num=aug_num)
 
 history = model.fit(gen,
                     epochs=50,
