@@ -12,7 +12,7 @@ import json
 INPUT_LIMIT = 10
 
 
-def data_generator(path = "data/training/", batch_size = 10, fitting=True, augmentation=True, multiaug=False, pure_aug=False,
+def data_generator(path = "data/training_500/", batch_size = 10, fitting=True, augmentation=True, multiaug=False, pure_aug=False,
                    rotation_num=0, noise_num=0, flip_num=0, shift_num=0, amp_change_num=0):
     print("Loading data from files")
     input_files = [f for f in listdir(path) if isfile(join( path,f)) and f.endswith('.bins') ]

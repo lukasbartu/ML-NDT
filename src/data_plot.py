@@ -9,7 +9,7 @@ import os
 from keras.testing_infra.test_utils import run_without_tensor_float_32
 from matplotlib.pyplot import legend
 
-data_files = [f for f in listdir(os.getcwd()) if isfile(join( os.getcwd(),f)) and f.endswith('.csv') ]
+data_files = [f for f in listdir(os.getcwd()) if isfile(join( os.getcwd(),f)) and f.endswith('.csv') and f.startswith("data_500")]
 
 legends=[]
 for data_file in data_files:
@@ -22,12 +22,12 @@ for data_file in data_files:
         row[i] = float(row[i])
 
     plt.plot(row)
-    legends.append(str(data_file[5:-4]))
+    legends.append(str(data_file[9:-4]))
 plt.legend(legends)
 plt.title('Validation loss of different training configurations')
 plt.ylabel('Loss')
 plt.xlabel('Epoch')
-plt.savefig("loss results.png")
+plt.savefig("loss results.svg", bbox_inches='tight', format='svg')
 plt.show()
 
 legends=[]
@@ -45,10 +45,10 @@ for data_file in data_files:
         row[i] = float(row[i])
 
     plt.plot(row)
-    legends.append(str(data_file[5:-4]))
+    legends.append(str(data_file[9:-4]))
 plt.legend(legends)
 plt.title('Validation accuracy of different training configurations')
 plt.ylabel('Accuracy')
 plt.xlabel('Epoch')
-plt.savefig("accuracy results.png")
+plt.savefig("accuracy results.svg", bbox_inches='tight', format='svg')
 plt.show()

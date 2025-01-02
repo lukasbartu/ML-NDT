@@ -80,8 +80,8 @@ xs =np.reshape( xs, (-1,256,256,1), 'C')
 callbacks = [keras.callbacks.ModelCheckpoint( 'modelcpnt'+str(run_uuid)+'.keras', monitor='val_loss', verbose=1, save_best_only=True)
             ]
 
-aug_num = 250
-gen = data_generator(batch_size=70, augmentation=True, multiaug=True, pure_aug=False,
+aug_num = 40
+gen = data_generator(path="data/training_100/", batch_size=70, augmentation=True, multiaug=False, pure_aug=True,
                      rotation_num=aug_num, noise_num=aug_num, flip_num=aug_num,shift_num=aug_num, amp_change_num=aug_num)
 
 history = model.fit(gen,
